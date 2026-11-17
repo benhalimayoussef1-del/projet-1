@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Loup-Garou : distribution des rôles</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main>
+  <section id="reglage" class="ecran">
+    <h1>Loup-Garou</h1>
+    <p class="intro">Un seul téléphone, tous les joueurs dans la même pièce. Choisissez les rôles, puis faites passer l'écran.</p>
+    <label class="n">Nombre de joueurs<input id="n" type="number" min="4" max="30" value="8"></label>
+    <ul id="roles"></ul>
+    <p id="bilan"></p>
+    <button id="start">Distribuer les rôles</button>
+  </section>
+
+  <section id="deal" class="ecran" hidden>
+    <p id="joueur"></p>
+    <button id="carte" class="carte" aria-live="polite">
+      <span class="face dos">Touchez pour voir votre rôle</span>
+      <span class="face rec"><strong id="role-nom"></strong><span id="role-desc"></span></span>
+    </button>
+    <p id="consigne"></p>
+  </section>
+
+  <section id="fin" class="ecran" hidden>
+    <h1>Rôles distribués</h1>
+    <p class="intro">Posez le téléphone au centre. La première nuit peut commencer.</p>
+    <ol id="liste" hidden></ol>
+    <button id="conteur" class="sec">Liste complète (conteur)</button>
+    <button id="rejouer">Nouvelle partie</button>
+  </section>
+</main>
+<script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Exercices de C en version web</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <h1>Exercices de C, version web</h1>
+  <p>Les mêmes programmes que ceux du dépôt, utilisables dans le navigateur.</p>
+  <nav>
+    <button data-tab="veh" class="on">Véhicules</button>
+    <button data-tab="etu">Étudiants</button>
+    <button data-tab="cli">Clients et factures</button>
+  </nav>
+</header>
+<main>
+  <section id="veh">
+    <h2>Parc de véhicules</h2>
+    <form id="veh-form">
+      <label>Immatriculation<input name="immat" type="number" required></label>
+      <label>Marque<input name="marque" required></label>
+      <label>Puissance<input name="puissance" type="number" min="0" required></label>
+      <label>Carburant<input name="carburant" required></label>
+      <label>Cylindres<input name="cyl" type="number" min="0" required></label>
+      <label class="wide">Coûts des révisions, séparés par des espaces (ex. 120 85.5)<input name="couts"></label>
+      <button>Ajouter le véhicule</button>
+    </form>
+    <div class="actions">
+      <button id="veh-sort" class="sec">Trier par coût total</button>
+      <button id="veh-max" class="sec">Trouver le plus coûteux</button>
+    </div>
+    <p id="veh-msg" class="msg"></p>
+    <div id="veh-table"></div>
+  </section>
+
+  <section id="etu" hidden>
+    <h2>Étudiants</h2>
+    <form id="etu-form">
+      <label>Code étudiant<input name="ce" type="number" required></label>
+      <label>Date de naissance<input name="naiss" type="date" required></label>
+      <label class="wide">Notes, séparées par des espaces (ex. 12 15.5 9)<input name="notes"></label>
+      <button>Ajouter l'étudiant</button>
+    </form>
+    <div class="actions">
+      <button id="etu-moy" class="sec">Trier par moyenne</button>
+      <button id="etu-age" class="sec">Trier par âge</button>
+    </div>
+    <p id="etu-msg" class="msg"></p>
+    <div id="etu-table"></div>
+  </section>
+
+  <section id="cli" hidden>
+    <h2>Clients et factures</h2>
+    <form id="cli-form">
+      <label>Code client<input name="cc" type="number" required></label>
+      <label class="wide">Factures : une ligne par facture, au format « code HT TVA »
+        <textarea name="f" rows="3" placeholder="10 80 16&#10;11 20 4"></textarea></label>
+      <button>Ajouter le client</button>
+    </form>
+    <p id="cli-msg" class="msg"></p>
+    <div id="cli-table"></div>
+    <p id="cli-stats"></p>
+  </section>
+</main>
+<script src="app.js"></script>
+</body>
+</html>

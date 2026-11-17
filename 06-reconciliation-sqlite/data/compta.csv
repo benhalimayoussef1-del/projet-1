@@ -1,0 +1,7 @@
+ref,date,libelle,montant
+V001,2026-11-02,Vente Alpha,1200.00
+V002,2026-11-03,Loyer,-650.00
+V003,2026-11-05,Achat Beta,-301.50
+V004,2026-11-07,Cloud,-49.90
+V005,2026-11-09,Vente Gamma,820.00
+V007,2026-11-10,Achat fournitures,-85.00

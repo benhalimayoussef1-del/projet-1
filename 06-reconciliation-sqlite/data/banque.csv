@@ -1,0 +1,7 @@
+ref,date,libelle,montant
+V001,2026-11-02,Virement client Alpha,1200.00
+V002,2026-11-03,Loyer novembre,-650.00
+V003,2026-11-05,Facture fournisseur Beta,-310.50
+V004,2026-11-07,Abonnement cloud,-49.90
+V005,2026-11-09,Virement client Gamma,820.00
+V006,2026-11-12,Frais bancaires,-12.00
