@@ -1,0 +1,796 @@
+import React, { useState, useEffect } from 'react';
+import { 
+  Play, Users, Wand2, Eye, Shield, User, 
+  Skull, Bug, Ghost, Moon, ArrowRight, Check,
+  Smartphone, Globe, Plus, Minus,
+  Sun, Timer, VolumeX, HeartPulse, AlertTriangle, PlayCircle, PauseCircle, RotateCcw
+} from 'lucide-react';
+
+// --- CONFIGURATION DES RÔLES ---
+const AVAILABLE_ROLES = [
+  { id: 'loup-garou', name: 'Loup-Garou', emoji: '🐺', icon: Moon, color: 'text-red-500', bg: 'bg-red-500/10', border: 'border-red-500/30', description: "Chaque nuit, se réveille pour dévorer un villageois." },
+  { id: 'villageois', name: 'Villageois', emoji: '🧑‍🌾', icon: User, color: 'text-slate-300', bg: 'bg-slate-300/10', border: 'border-slate-300/30', description: "Aucun pouvoir. Doit démasquer les Loups-Garous le jour." },
+  { id: 'sorciere', name: 'Sorcière', emoji: '🧙‍♀️', icon: Wand2, color: 'text-purple-400', bg: 'bg-purple-400/10', border: 'border-purple-400/30', description: "Possède une potion de vie et une potion de mort." },
+  { id: 'voyante', name: 'Voyante', emoji: '🔮', icon: Eye, color: 'text-indigo-400', bg: 'bg-indigo-400/10', border: 'border-indigo-400/30', description: "Chaque nuit, découvre la véritable identité d'un joueur." },
+  { id: 'protecteur', name: 'Protecteur', emoji: '🛡️', icon: Shield, color: 'text-blue-400', bg: 'bg-blue-400/10', border: 'border-blue-400/30', description: "Chaque nuit, protège un joueur de l'attaque des loups." },
+  { id: 'ancien', name: 'Ancien', emoji: '👴', icon: Users, color: 'text-amber-500', bg: 'bg-amber-500/10', border: 'border-amber-500/30', description: "Survit à la première attaque des Loups-Garous." },
+  { id: 'loup-noir', name: 'Loup Noir', emoji: '🐺🌑', icon: Skull, color: 'text-zinc-400', bg: 'bg-zinc-800/50', border: 'border-zinc-500/50', description: "Loup-Garou puissant aux capacités obscures." },
+  { id: 'pere-infecte', name: 'Père Infecté', emoji: '🦠', icon: Bug, color: 'text-green-500', bg: 'bg-green-500/10', border: 'border-green-500/30', description: "Transforme une victime des loups en Loup-Garou." },
+  { id: 'alien', name: 'Alien', emoji: '👽', icon: Ghost, color: 'text-teal-400', bg: 'bg-teal-400/10', border: 'border-teal-400/30', description: "Rôle indépendant. Ses conditions de victoire sont uniques." },
+];
+
+// --- UTILITAIRE : MÉLANGE ---
+const shuffleArray = (array) => {
+  const newArray = [...array];
+  for (let i = newArray.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+  }
+  return newArray;
+};
+
+// --- COMPOSANT PRINCIPAL ---
+export default function App() {
+  const [gameState, setGameState] = useState('HOME'); // HOME, SETUP, DISTRIBUTION, END
+  
+  // Setup State
+  const [playerCount, setPlayerCount] = useState(9);
+  const [rolesCount, setRolesCount] = useState({
+    'loup-garou': 2,
+    'villageois': 7,
+  });
+
+  // Game State
+  const [shuffledRoles, setShuffledRoles] = useState([]);
+  const [currentPlayerIndex, setCurrentPlayerIndex] = useState(0);
+
+  // --- LOGIQUE SETUP ---
+  const totalSelectedRoles = Object.values(rolesCount).reduce((a, b) => a + b, 0);
+
+  const handleIncrement = (roleId) => {
+    setRolesCount(prev => ({
+      ...prev,
+      [roleId]: (prev[roleId] || 0) + 1
+    }));
+  };
+
+  const handleDecrement = (roleId) => {
+    setRolesCount(prev => {
+      const current = prev[roleId] || 0;
+      if (current <= 0) return prev;
+      const newState = { ...prev, [roleId]: current - 1 };
+      if (newState[roleId] === 0) delete newState[roleId];
+      return newState;
+    });
+  };
+
+  const startGame = () => {
+    if (totalSelectedRoles !== playerCount) return;
+    
+    let deck = [];
+    Object.entries(rolesCount).forEach(([roleId, count]) => {
+      const roleDef = AVAILABLE_ROLES.find(r => r.id === roleId);
+      for (let i = 0; i < count; i++) {
+        deck.push(roleDef);
+      }
+    });
+
+    setShuffledRoles(shuffleArray(deck));
+    setCurrentPlayerIndex(0);
+    setGameState('DISTRIBUTION');
+  };
+
+  const nextPlayer = () => {
+    if (currentPlayerIndex < shuffledRoles.length - 1) {
+      setCurrentPlayerIndex(prev => prev + 1);
+    } else {
+      setGameState('DASHBOARD');
+    }
+  };
+
+  const resetGame = () => {
+    setGameState('HOME');
+    setRolesCount({ 'loup-garou': 2, 'villageois': Math.max(0, playerCount - 2) });
+  };
+
+  // --- RENDU ---
+  return (
+    <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-950 via-slate-900 to-slate-950 text-white font-sans selection:bg-purple-500/30">
+      
+      {/* NOUVEAU: Background Texture & Motif de Sigils / Géométrie sacrée */}
+      <div className="fixed inset-0 pointer-events-none opacity-[0.03] z-0" style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 100 100'%3E%3Cg stroke='%23ffffff' stroke-width='1.5' fill='none'%3E%3Ccircle cx='50' cy='50' r='40' /%3E%3Ccircle cx='50' cy='50' r='25' stroke-dasharray='4 4' /%3E%3Cpolygon points='50,10 79,85 12,38 88,38 21,85' /%3E%3C/g%3E%3C/svg%3E\")", backgroundSize: '120px 120px' }}></div>
+
+      {/* Styles globaux pour la 3D (Cartes) */}
+      <style dangerouslySetInnerHTML={{__html: `
+        .perspective-1000 { perspective: 1000px; }
+        .transform-style-3d { transform-style: preserve-3d; }
+        .backface-hidden { backface-visibility: hidden; }
+        .rotate-y-180 { transform: rotateY(180deg); }
+        .card-transition { transition: transform 0.6s cubic-bezier(0.4, 0.0, 0.2, 1); }
+      `}} />
+
+      <main className="max-w-md mx-auto h-[100dvh] flex flex-col relative overflow-hidden">
+        
+        {/* VUE : ACCUEIL */}
+        {gameState === 'HOME' && (
+          <div className="flex-1 flex flex-col items-center justify-center p-6 space-y-12 animate-in fade-in zoom-in duration-700">
+            <div className="text-center space-y-4">
+              <div className="relative mx-auto w-32 h-32 flex items-center justify-center bg-purple-900/40 rounded-full border border-purple-500/30 shadow-[0_0_50px_rgba(168,85,247,0.4)]">
+                <Moon className="w-16 h-16 text-purple-300" />
+                <div className="absolute inset-0 rounded-full animate-ping opacity-20 bg-purple-400" style={{animationDuration: '3s'}}></div>
+              </div>
+              <h1 className="text-5xl font-black tracking-tighter bg-gradient-to-br from-white via-purple-200 to-purple-800 bg-clip-text text-transparent">
+                Loup-Garou
+              </h1>
+              <p className="text-purple-200/60 font-medium">L'expérience ultime de survie</p>
+            </div>
+
+            <div className="w-full space-y-4">
+              <button 
+                onClick={() => setGameState('SETUP')}
+                className="w-full relative group overflow-hidden rounded-2xl bg-gradient-to-r from-purple-600 to-indigo-600 p-[2px] transition-all hover:scale-[1.02] active:scale-[0.98]"
+              >
+                <div className="absolute inset-0 bg-white/20 group-hover:bg-white/0 transition-colors"></div>
+                <div className="relative bg-slate-900/50 backdrop-blur-sm rounded-xl p-4 flex items-center justify-between">
+                  <div className="flex items-center space-x-4">
+                    <Smartphone className="w-6 h-6 text-purple-300" />
+                    <div className="text-left">
+                      <h3 className="font-bold text-lg">Mode Local</h3>
+                      <p className="text-xs text-purple-200/70">Passez le téléphone entre amis</p>
+                    </div>
+                  </div>
+                  <ArrowRight className="w-5 h-5 text-purple-300" />
+                </div>
+              </button>
+
+              <button 
+                disabled
+                className="w-full opacity-60 rounded-2xl bg-slate-800 p-4 border border-slate-700 flex items-center space-x-4 cursor-not-allowed"
+              >
+                <Globe className="w-6 h-6 text-slate-400" />
+                <div className="text-left">
+                  <h3 className="font-bold text-lg text-slate-300">Mode en Ligne</h3>
+                  <p className="text-xs text-slate-500">Prochainement...</p>
+                </div>
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* VUE : CONFIGURATION */}
+        {gameState === 'SETUP' && (
+          <div className="flex-1 flex flex-col h-full animate-in slide-in-from-bottom-8 duration-500">
+            <div className="p-6 pb-2 border-b border-white/10 bg-slate-950/50 backdrop-blur-md sticky top-0 z-10">
+              <h2 className="text-2xl font-bold mb-4">Configuration</h2>
+              
+              <div className="flex items-center justify-between bg-white/5 rounded-xl p-4 border border-white/10">
+                <span className="text-slate-300 font-medium">Nombre de joueurs</span>
+                <div className="flex items-center space-x-4">
+                  <button 
+                    onClick={() => {
+                      if(playerCount > 3) setPlayerCount(p => p - 1);
+                    }}
+                    className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition"
+                  >
+                    <Minus className="w-4 h-4" />
+                  </button>
+                  <span className="text-xl font-bold w-6 text-center">{playerCount}</span>
+                  <button 
+                    onClick={() => setPlayerCount(p => p + 1)}
+                    className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition"
+                  >
+                    <Plus className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-6 space-y-3 pb-48">
+              <h3 className="text-sm font-semibold text-purple-300 uppercase tracking-wider mb-2">Choisir les rôles</h3>
+              
+              {AVAILABLE_ROLES.map((role) => {
+                const count = rolesCount[role.id] || 0;
+                const Icon = role.icon;
+                const isSelected = count > 0;
+                
+                return (
+                  <div key={role.id} className={`flex items-center justify-between p-3 rounded-xl border transition-all ${isSelected ? 'bg-white/10 border-purple-500/50' : 'bg-slate-900/40 border-white/5'}`}>
+                    <div className="flex items-center space-x-3">
+                      <div className={`p-2 rounded-lg ${isSelected ? role.bg : 'bg-white/5'}`}>
+                        <Icon className={`w-5 h-5 ${isSelected ? role.color : 'text-slate-500'}`} />
+                      </div>
+                      <span className={`font-medium ${isSelected ? 'text-white' : 'text-slate-400'}`}>
+                        {role.name}
+                      </span>
+                    </div>
+                    
+                    <div className="flex items-center space-x-3">
+                      <button 
+                        onClick={() => handleDecrement(role.id)}
+                        className={`w-7 h-7 rounded-full flex items-center justify-center transition-colors ${count > 0 ? 'bg-white/10 hover:bg-white/20 text-white' : 'bg-transparent text-transparent'}`}
+                      >
+                        <Minus className="w-3 h-3" />
+                      </button>
+                      <span className={`w-4 text-center font-bold ${isSelected ? 'text-white' : 'text-slate-600'}`}>
+                        {count}
+                      </span>
+                      <button 
+                        onClick={() => handleIncrement(role.id)}
+                        className="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors text-white"
+                      >
+                        <Plus className="w-3 h-3" />
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Sticky Footer */}
+            <div className="absolute bottom-0 left-0 w-full p-6 bg-gradient-to-t from-slate-950 via-slate-950 to-transparent">
+              <div className="bg-slate-900 border border-white/10 rounded-2xl p-4 shadow-2xl flex flex-col space-y-4">
+                <div className="flex justify-between items-center text-sm font-medium">
+                  <span className="text-slate-400">Rôles sélectionnés</span>
+                  <span className={`${totalSelectedRoles === playerCount ? 'text-green-400' : 'text-red-400'}`}>
+                    {totalSelectedRoles} / {playerCount}
+                  </span>
+                </div>
+                
+                <button
+                  onClick={startGame}
+                  disabled={totalSelectedRoles !== playerCount}
+                  className={`w-full py-4 rounded-xl font-bold text-lg transition-all flex items-center justify-center space-x-2 ${
+                    totalSelectedRoles === playerCount 
+                      ? 'bg-gradient-to-r from-purple-600 to-indigo-600 hover:opacity-90 shadow-lg shadow-purple-600/30' 
+                      : 'bg-slate-800 text-slate-500 cursor-not-allowed'
+                  }`}
+                >
+                  <span>Démarrer la partie</span>
+                  {totalSelectedRoles === playerCount && <Play className="w-5 h-5 fill-current" />}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* VUE : DISTRIBUTION */}
+        {gameState === 'DISTRIBUTION' && (
+          <DistributionPhase 
+            role={shuffledRoles[currentPlayerIndex]} 
+            playerNumber={currentPlayerIndex + 1}
+            totalPlayers={shuffledRoles.length}
+            onNext={nextPlayer}
+          />
+        )}
+
+        {/* VUE : TABLEAU DE BORD NARRATEUR */}
+        {gameState === 'DASHBOARD' && (
+          <NarratorDashboard 
+            initialRoles={shuffledRoles} 
+            onReset={resetGame} 
+          />
+        )}
+
+      </main>
+    </div>
+  );
+}
+
+// --- COMPOSANT : PHASE DE DISTRIBUTION ---
+function DistributionPhase({ role, playerNumber, totalPlayers, onNext }) {
+  // state: 0 = Face down (initial), 1 = Face up (revealed), 2 = Face down (ready to pass)
+  const [cardState, setCardState] = useState(0); 
+
+  // Reset card state when player changes
+  useEffect(() => {
+    setCardState(0);
+  }, [playerNumber]);
+
+  const handleCardClick = () => {
+    if (cardState === 0) setCardState(1);
+    else if (cardState === 1) setCardState(2);
+  };
+
+  const Icon = role.icon;
+
+  return (
+    <div className="flex-1 flex flex-col items-center justify-center p-6 h-full animate-in fade-in duration-300">
+      
+      <div className="absolute top-8 left-0 w-full text-center space-y-2">
+        <h2 className="text-3xl font-black text-white/90">Joueur {playerNumber}</h2>
+        <p className="text-sm font-medium text-purple-300/60">
+          Joueur {playerNumber} sur {totalPlayers}
+        </p>
+      </div>
+
+      {/* Le conteneur de la carte */}
+      <div 
+        className="relative w-72 h-[26rem] perspective-1000 mt-12 cursor-pointer group"
+        onClick={handleCardClick}
+      >
+        <div className={`w-full h-full relative transform-style-3d card-transition ${cardState === 1 ? 'rotate-y-180' : ''}`}>
+          
+          {/* FACE ARRIÈRE (Dos de la carte - Logo) */}
+          <div className="absolute inset-0 backface-hidden rounded-2xl bg-gradient-to-b from-slate-800 via-slate-900 to-slate-950 border border-purple-500/30 shadow-[0_0_50px_rgba(0,0,0,0.6)] flex flex-col items-center justify-center p-6 overflow-hidden">
+            {/* Pattern stylisé et mystique */}
+            <div className="absolute inset-0 opacity-30 bg-[radial-gradient(circle_at_center,_rgba(168,85,247,0.3)_0%,_transparent_70%)]"></div>
+            <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_center,_white_1px,_transparent_1px)] bg-[size:20px_20px]"></div>
+            
+            <div className={`relative flex flex-col items-center justify-center w-full h-full transition-opacity duration-500 ${cardState === 2 ? 'opacity-0 absolute' : 'opacity-100'}`}>
+              {/* Lune parfaitement centrée avec effet de lumière */}
+              <div className="relative flex items-center justify-center">
+                
+                {/* --- NOUVEAU: Runes et Cercles Magiques Animés --- */}
+                <div className="absolute flex items-center justify-center z-0">
+                  {/* Cercle magique externe (rotation horaire) */}
+                  <svg className="w-64 h-64 animate-[spin_20s_linear_infinite] opacity-30 text-purple-300 drop-shadow-[0_0_8px_rgba(216,180,254,0.3)]" viewBox="0 0 100 100">
+                    <circle cx="50" cy="50" r="48" stroke="currentColor" strokeWidth="0.5" fill="none" strokeDasharray="3 4 1 2" />
+                    <polygon points="50,2 78,89 4,35 96,35 22,89" stroke="currentColor" strokeWidth="0.5" fill="none" />
+                    <circle cx="50" cy="50" r="40" stroke="currentColor" strokeWidth="0.2" fill="none" />
+                  </svg>
+                </div>
+                <div className="absolute flex items-center justify-center z-0">
+                  {/* Cercle magique interne (rotation anti-horaire) avec Pentagramme */}
+                  <svg className="w-48 h-48 animate-[spin_15s_linear_infinite_reverse] opacity-40 text-indigo-300 drop-shadow-[0_0_5px_rgba(129,140,248,0.4)]" viewBox="0 0 100 100">
+                    <circle cx="50" cy="50" r="45" stroke="currentColor" strokeWidth="1" fill="none" strokeDasharray="2 6" />
+                    <circle cx="50" cy="50" r="35" stroke="currentColor" strokeWidth="0.5" fill="none" />
+                    <polygon points="50,15 61,81 5,40 95,40 39,81" stroke="currentColor" strokeWidth="1" fill="none" strokeLinejoin="round" />
+                    <path d="M 20 20 L 30 30 M 80 20 L 70 30 M 80 80 L 70 70 M 20 80 L 30 70" stroke="currentColor" strokeWidth="1" strokeDasharray="1 2" />
+                  </svg>
+                </div>
+                {/* --- FIN DES CERCLES --- */}
+
+                <div className="absolute inset-0 bg-purple-600/40 blur-2xl rounded-full w-36 h-36 animate-pulse z-0"></div>
+                <div className="w-32 h-32 rounded-full bg-gradient-to-br from-slate-800 to-slate-950 border-2 border-purple-500/40 flex items-center justify-center shadow-[0_0_40px_rgba(168,85,247,0.5)] z-10 relative">
+                  <Moon className="w-16 h-16 text-purple-300 drop-shadow-[0_0_10px_rgba(216,180,254,0.8)]" />
+                </div>
+              </div>
+              
+              {/* Texte positionné en bas pour ne pas casser le centrage de la lune */}
+              <p className="absolute bottom-4 text-center font-medium text-purple-300/50 tracking-widest uppercase text-xs animate-pulse">
+                Touchez pour révéler
+              </p>
+            </div>
+
+            <div className={`absolute inset-0 flex flex-col items-center justify-center p-6 transition-opacity duration-500 ${cardState === 2 ? 'opacity-100 z-20' : 'opacity-0 pointer-events-none'}`}>
+              <Check className="w-16 h-16 text-green-400 mb-6 drop-shadow-[0_0_15px_rgba(74,222,128,0.5)]" />
+              <p className="text-center text-lg font-bold text-white mb-2">Rôle enregistré</p>
+              <p className="text-center text-sm text-slate-400">Passez l'appareil au joueur suivant</p>
+            </div>
+          </div>
+
+          {/* FACE AVANT (Rôle Révélé) */}
+          <div className={`absolute inset-0 backface-hidden rotate-y-180 rounded-2xl ${role.bg} border ${role.border} shadow-[0_0_50px_rgba(0,0,0,0.8)] flex flex-col items-center justify-center p-6 backdrop-blur-xl text-center`}>
+             <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-white/5 to-transparent rounded-2xl pointer-events-none"></div>
+             
+             <div className="text-7xl mb-4 drop-shadow-2xl mt-4">
+               {role.emoji}
+             </div>
+             
+             <h3 className={`text-3xl font-black mb-3 ${role.color} drop-shadow-lg leading-tight`}>
+               {role.name}
+             </h3>
+             
+             <div className="flex-1 flex items-center justify-center">
+               <p className="text-white/90 text-sm font-medium italic px-2">
+                 "{role.description}"
+               </p>
+             </div>
+             
+             <p className="text-white/50 text-xs mt-auto animate-pulse font-medium">
+               Touchez pour cacher la carte.
+             </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Bouton Suivant (Apparaît seulement après avoir vu et caché) */}
+      <div className={`absolute bottom-12 left-0 w-full px-6 transition-all duration-500 ${cardState === 2 ? 'translate-y-0 opacity-100 visible' : 'translate-y-10 opacity-0 invisible'}`}>
+        <button
+          onClick={(e) => { e.stopPropagation(); onNext(); }}
+          className="w-full py-4 rounded-xl bg-white text-slate-950 font-bold text-lg shadow-[0_0_30px_rgba(255,255,255,0.2)] hover:bg-slate-200 transition-colors flex items-center justify-center space-x-2"
+        >
+          <span>{playerNumber === totalPlayers ? "Terminer la distribution" : "Joueur Suivant"}</span>
+          <ArrowRight className="w-5 h-5" />
+        </button>
+      </div>
+
+    </div>
+  );
+}
+
+// --- COMPOSANT : TABLEAU DE BORD NARRATEUR ---
+function NarratorDashboard({ initialRoles, onReset }) {
+  const [phase, setPhase] = useState('NIGHT'); // NIGHT, DAY
+  const [dayPhase, setDayPhase] = useState('SPEAKING'); // SPEAKING, VOTING
+  const [turn, setTurn] = useState(1);
+  
+  // Générer les joueurs à partir des rôles distribués
+  const [players, setPlayers] = useState(() =>
+    initialRoles.map((role, idx) => ({
+      id: idx + 1,
+      name: `Joueur ${idx + 1}`,
+      role: role,
+      isAlive: true,
+      isInfected: false,
+      isSilenced: false,
+    }))
+  );
+
+  // États des modules spéciaux
+  const [witchPotions, setWitchPotions] = useState({ life: true, death: true });
+  const [infectUsed, setInfectUsed] = useState(false);
+  const [alienUsed, setAlienUsed] = useState(false);
+  
+  const [alienTarget, setAlienTarget] = useState('');
+  const [alienRole, setAlienRole] = useState('');
+  const [infectTarget, setInfectTarget] = useState('');
+  const [silenceTarget, setSilenceTarget] = useState('');
+  
+  const [message, setMessage] = useState(null);
+  
+  // États du chronomètre (Jour - Tours de parole)
+  const alivePlayers = players.filter(p => p.isAlive);
+  const aliveCount = alivePlayers.length;
+  
+  const [currentSpeakerIndex, setCurrentSpeakerIndex] = useState(0);
+  const [speakerBaseTime, setSpeakerBaseTime] = useState(60); // 60s par défaut
+  const [timeLeft, setTimeLeft] = useState(60);
+  const [isTimerRunning, setIsTimerRunning] = useState(false);
+
+  useEffect(() => {
+    let interval;
+    if (isTimerRunning && timeLeft > 0) {
+      interval = setInterval(() => setTimeLeft(t => t - 1), 1000);
+    } else if (isTimerRunning && timeLeft <= 0) {
+      if (phase === 'DAY' && dayPhase === 'SPEAKING') {
+        handleNextSpeaker();
+      } else {
+        setIsTimerRunning(false);
+      }
+    }
+    return () => clearInterval(interval);
+  }, [isTimerRunning, timeLeft, phase, dayPhase, currentSpeakerIndex, aliveCount, speakerBaseTime]);
+
+  const formatTime = (seconds) => {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m}:${s.toString().padStart(2, '0')}`;
+  };
+
+  const showMessage = (msg) => {
+    setMessage(msg);
+    setTimeout(() => setMessage(null), 4000);
+  };
+
+  const togglePhase = () => {
+    if (phase === 'NIGHT') {
+      setPhase('DAY');
+      setDayPhase('SPEAKING');
+      setCurrentSpeakerIndex(0);
+      setTimeLeft(speakerBaseTime);
+      setIsTimerRunning(false);
+      showMessage("Le jour se lève. Le village se réveille et découvre les morts.");
+    } else {
+      setPhase('NIGHT');
+      setTurn(t => t + 1);
+      setPlayers(players.map(p => ({ ...p, isSilenced: false })));
+      showMessage("La nuit tombe. Le village s'endort...");
+    }
+  };
+
+  const handleNextSpeaker = () => {
+    if (currentSpeakerIndex < aliveCount - 1) {
+      setCurrentSpeakerIndex(prev => prev + 1);
+      setTimeLeft(speakerBaseTime);
+      setIsTimerRunning(true);
+    } else {
+      setDayPhase('VOTING');
+      setIsTimerRunning(false);
+    }
+  };
+
+  const adjustTime = (delta) => {
+    if (!isTimerRunning) {
+      setSpeakerBaseTime(t => Math.max(10, t + delta));
+      setTimeLeft(t => Math.max(10, t + delta));
+    }
+  };
+
+  const toggleAlive = (id) => {
+    setPlayers(players.map(p => p.id === id ? { ...p, isAlive: !p.isAlive } : p));
+  };
+
+  const handleManualAliveChange = (delta) => {
+    if (delta === -1) {
+        // Tuer le premier vivant trouvé (en partant de la fin pour tuer les derniers joueurs)
+        const pToKill = [...players].reverse().find(p => p.isAlive);
+        if (pToKill) toggleAlive(pToKill.id);
+    } else if (delta === 1) {
+        // Ressusciter le premier mort trouvé
+        const pToRevive = players.find(p => !p.isAlive);
+        if (pToRevive) toggleAlive(pToRevive.id);
+    }
+  };
+
+  const handleAlienGuess = () => {
+    if (!alienTarget || !alienRole) return;
+    const target = players.find(p => p.id === Number(alienTarget));
+    if (target.role.id === alienRole) {
+      setPlayers(players.map(p => p.id === target.id ? { ...p, isAlive: false } : p));
+      showMessage(`Succès ! L'Alien a vu juste, ${target.name} meurt.`);
+    } else {
+      setPlayers(players.map(p => p.role.id === 'alien' ? { ...p, isAlive: false } : p));
+      showMessage(`Échec de la suggestion ! L'Alien meurt sur le coup.`);
+    }
+    setAlienUsed(true);
+  };
+
+  const handleInfect = () => {
+    if (!infectTarget) return;
+    setPlayers(players.map(p => p.id === Number(infectTarget) ? { ...p, isInfected: true } : p));
+    setInfectUsed(true);
+    showMessage(`Le joueur infecté a rejoint les Loups-Garous.`);
+  };
+
+  const handleSilence = () => {
+    if (!silenceTarget) return;
+    setPlayers(players.map(p => p.id === Number(silenceTarget) ? { ...p, isSilenced: true } : p));
+    showMessage(`Joueur réduit au silence par le Loup Noir.`);
+  };
+
+  const isRoleInGame = (roleId) => initialRoles.some(r => r.id === roleId);
+  const currentAlivePlayer = alivePlayers[currentSpeakerIndex] || { name: "Joueur" };
+
+  return (
+    <div className="flex-1 flex flex-col h-full animate-in fade-in duration-500 relative">
+      {/* Toast Notification */}
+      {message && (
+        <div className="absolute top-20 left-1/2 -translate-x-1/2 bg-slate-800 border border-purple-500/50 text-white px-5 py-3 rounded-full shadow-2xl z-50 animate-in slide-in-from-top-4 fade-in duration-300 flex items-center space-x-3 w-max max-w-[90%]">
+           <AlertTriangle className="w-5 h-5 text-purple-400 shrink-0" />
+           <span className="font-medium text-sm leading-tight">{message}</span>
+        </div>
+      )}
+
+      {/* Header Sticky */}
+      <div className="sticky top-0 p-4 border-b border-white/10 bg-slate-950/90 backdrop-blur-xl flex justify-between items-center z-10 shrink-0 shadow-lg">
+         <div className="flex items-center space-x-3">
+            <div className={`p-2 rounded-xl transition-colors ${phase === 'DAY' ? 'bg-amber-500/20 text-amber-400 shadow-[0_0_15px_rgba(251,191,36,0.2)]' : 'bg-indigo-500/20 text-indigo-400 shadow-[0_0_15px_rgba(99,102,241,0.2)]'}`}>
+               {phase === 'DAY' ? <Sun className="w-6 h-6" /> : <Moon className="w-6 h-6" />}
+            </div>
+            <div>
+               <h2 className="text-xl font-bold">{phase === 'DAY' ? 'Le Jour' : 'La Nuit'}</h2>
+               <div className="flex items-center space-x-2 mt-0.5">
+                 <span className="text-xs text-slate-400 font-medium">Tour {turn} • </span>
+                 
+                 {/* Suivi manuel des joueurs en vie */}
+                 <div className="flex items-center space-x-1 bg-white/5 rounded-full px-1 py-0.5">
+                   <button onClick={() => handleManualAliveChange(-1)} className="w-5 h-5 rounded-full flex items-center justify-center hover:bg-white/10 transition text-slate-300">
+                     <Minus className="w-3 h-3" />
+                   </button>
+                   <span className="text-xs font-bold text-white w-3 text-center">{aliveCount}</span>
+                   <button onClick={() => handleManualAliveChange(1)} className="w-5 h-5 rounded-full flex items-center justify-center hover:bg-white/10 transition text-slate-300">
+                     <Plus className="w-3 h-3" />
+                   </button>
+                 </div>
+               </div>
+            </div>
+         </div>
+         <button 
+            onClick={phase === 'DAY' && dayPhase === 'SPEAKING' ? () => setDayPhase('VOTING') : togglePhase} 
+            className={`px-4 py-2 rounded-xl font-bold text-sm transition shadow-lg ${phase === 'DAY' ? 'bg-indigo-600 hover:bg-indigo-500 text-white' : 'bg-amber-600 hover:bg-amber-500 text-slate-900'}`}
+         >
+            {phase === 'DAY' && dayPhase === 'SPEAKING' ? 'Passer au vote' : phase === 'DAY' ? 'Coucher le village' : 'Réveiller le village'}
+         </button>
+      </div>
+
+      <div className="flex-1 overflow-y-auto p-4 space-y-6 pb-12">
+        
+        {/* Module : Chronomètre de Jour (Tour de Parole) */}
+        {phase === 'DAY' && dayPhase === 'SPEAKING' && (
+          <div className="p-6 rounded-2xl bg-gradient-to-br from-indigo-900/30 to-slate-900/50 border border-indigo-500/30 text-center flex flex-col items-center space-y-4 shadow-xl relative overflow-hidden">
+            
+            <div className="absolute top-0 left-0 w-full h-1 bg-indigo-900/50">
+               <div className="h-full bg-indigo-500 transition-all duration-1000" style={{ width: `${(timeLeft / speakerBaseTime) * 100}%` }}></div>
+            </div>
+
+            <h3 className="text-indigo-300 font-medium flex items-center space-x-2">
+              <Users className="w-5 h-5" />
+              <span>Tour de parole : {currentAlivePlayer.name}</span>
+            </h3>
+            <span className="text-xs text-indigo-400/70 font-bold bg-indigo-900/40 px-3 py-1 rounded-full border border-indigo-500/20">
+              {currentSpeakerIndex + 1} sur {aliveCount}
+            </span>
+            
+            <div className="flex items-center justify-center space-x-4">
+              <button 
+                onClick={() => adjustTime(-10)} 
+                disabled={isTimerRunning} 
+                className="p-3 rounded-full bg-indigo-900/50 hover:bg-indigo-800 transition disabled:opacity-30 text-indigo-300"
+              >
+                <Minus className="w-6 h-6" />
+              </button>
+              
+              <div className="text-6xl font-black tabular-nums text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.2)] tracking-tighter w-40 text-center">
+                {formatTime(timeLeft)}
+              </div>
+              
+              <button 
+                onClick={() => adjustTime(10)} 
+                disabled={isTimerRunning} 
+                className="p-3 rounded-full bg-indigo-900/50 hover:bg-indigo-800 transition disabled:opacity-30 text-indigo-300"
+              >
+                <Plus className="w-6 h-6" />
+              </button>
+            </div>
+
+            <div className="flex space-x-4 w-full pt-2">
+               <button onClick={() => setIsTimerRunning(!isTimerRunning)} className="flex-1 py-3 rounded-xl font-bold bg-indigo-600 hover:bg-indigo-500 transition shadow-lg shadow-indigo-600/30 text-white flex justify-center items-center space-x-2">
+                  {isTimerRunning ? <PauseCircle className="w-6 h-6" /> : <PlayCircle className="w-6 h-6" />}
+                  <span>{isTimerRunning ? 'Pause' : 'Démarrer'}</span>
+               </button>
+               <button onClick={() => { handleNextSpeaker(); }} className="flex-1 py-3 rounded-xl font-bold bg-slate-700 hover:bg-slate-600 border border-slate-600 transition shadow-lg text-white flex justify-center items-center space-x-2">
+                  <span>Suivant</span>
+                  <ArrowRight className="w-5 h-5" />
+               </button>
+            </div>
+          </div>
+        )}
+
+        {/* Module : Phase de Vote */}
+        {phase === 'DAY' && dayPhase === 'VOTING' && (
+          <div className="p-6 rounded-2xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-600 text-center flex flex-col items-center space-y-4 shadow-xl animate-in zoom-in-95 duration-300">
+            <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center mb-2">
+               <Users className="w-6 h-6 text-slate-300" />
+            </div>
+            <h3 className="text-white font-bold text-xl">Le Village Vote</h3>
+            <p className="text-sm text-slate-400 mb-4">Qui sera sacrifié ?</p>
+            
+            <button 
+              onClick={() => { handleManualAliveChange(-1); togglePhase(); }} 
+              className="w-full py-4 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold transition shadow-lg flex justify-center items-center space-x-2 border border-red-500/50"
+            >
+               <Skull className="w-5 h-5" />
+               <span>Un joueur est éliminé (Majorité)</span>
+            </button>
+            <button 
+              onClick={() => { togglePhase(); }} 
+              className="w-full py-4 rounded-xl bg-slate-700 hover:bg-slate-600 text-white font-bold transition shadow-lg flex justify-center items-center space-x-2 border border-slate-500/50"
+            >
+               <Check className="w-5 h-5" />
+               <span>Vote Nul / Passe (Aucun mort)</span>
+            </button>
+          </div>
+        )}
+
+        {/* Modules : Actions de Nuit */}
+        {phase === 'NIGHT' && (
+          <div className="space-y-4">
+            <h3 className="text-lg font-bold text-white/90 border-b border-white/10 pb-2">Actions Spéciales</h3>
+            
+            {isRoleInGame('sorciere') && (
+              <div className="p-4 rounded-xl bg-purple-900/20 border border-purple-500/30 space-y-3">
+                <div className="flex items-center space-x-2">
+                  <Wand2 className="w-5 h-5 text-purple-400" />
+                  <h4 className="font-bold text-purple-300">Sorcière</h4>
+                </div>
+                <div className="flex space-x-2">
+                  <button onClick={() => setWitchPotions(p => ({...p, life: false}))} disabled={!witchPotions.life} className={`flex-1 py-2 rounded-lg text-sm font-bold transition ${witchPotions.life ? 'bg-purple-600 hover:bg-purple-500 text-white shadow-lg' : 'bg-slate-800/50 text-slate-500 line-through'}`}>
+                    {witchPotions.life ? "Potion de Vie" : "Vie utilisée"}
+                  </button>
+                  <button onClick={() => setWitchPotions(p => ({...p, death: false}))} disabled={!witchPotions.death} className={`flex-1 py-2 rounded-lg text-sm font-bold transition ${witchPotions.death ? 'bg-red-600 hover:bg-red-500 text-white shadow-lg' : 'bg-slate-800/50 text-slate-500 line-through'}`}>
+                    {witchPotions.death ? "Potion de Mort" : "Mort utilisée"}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {isRoleInGame('pere-infecte') && !infectUsed && (
+               <div className="p-4 rounded-xl bg-green-900/20 border border-green-500/30 space-y-3">
+                  <div className="flex items-center space-x-2">
+                     <Bug className="w-5 h-5 text-green-400" />
+                     <h4 className="font-bold text-green-300">Père Infecté</h4>
+                  </div>
+                  <div className="flex space-x-2">
+                     <select value={infectTarget} onChange={e => setInfectTarget(e.target.value)} className="flex-1 bg-slate-900/80 border border-white/10 rounded-lg p-2 text-sm focus:border-green-500 outline-none text-white">
+                        <option value="">Choisir victime...</option>
+                        {players.filter(p => p.isAlive && !p.isInfected).map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                     </select>
+                     <button onClick={handleInfect} className="bg-green-600 hover:bg-green-500 px-4 py-2 rounded-lg text-sm font-bold transition text-white">Infecter</button>
+                  </div>
+               </div>
+            )}
+
+            {isRoleInGame('loup-noir') && (
+               <div className="p-4 rounded-xl bg-zinc-800/40 border border-zinc-500/30 space-y-3">
+                  <div className="flex items-center space-x-2">
+                     <VolumeX className="w-5 h-5 text-zinc-400" />
+                     <h4 className="font-bold text-zinc-300">Loup Noir (Silence)</h4>
+                  </div>
+                  <div className="flex space-x-2">
+                     <select value={silenceTarget} onChange={e => setSilenceTarget(e.target.value)} className="flex-1 bg-slate-900/80 border border-white/10 rounded-lg p-2 text-sm focus:border-zinc-500 outline-none text-white">
+                        <option value="">Choisir cible...</option>
+                        {players.filter(p => p.isAlive && !p.isSilenced).map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                     </select>
+                     <button onClick={handleSilence} className="bg-zinc-600 hover:bg-zinc-500 px-4 py-2 rounded-lg text-sm font-bold transition text-white">Faire taire</button>
+                  </div>
+               </div>
+            )}
+
+            {isRoleInGame('alien') && !alienUsed && (
+               <div className="p-4 rounded-xl bg-teal-900/20 border border-teal-500/30 space-y-3">
+                  <div className="flex items-center space-x-2">
+                     <Ghost className="w-5 h-5 text-teal-400" />
+                     <h4 className="font-bold text-teal-300">Alien (Suggestion)</h4>
+                  </div>
+                  <div className="space-y-2">
+                     <select value={alienTarget} onChange={e => setAlienTarget(e.target.value)} className="w-full bg-slate-900/80 border border-white/10 rounded-lg p-2 text-sm focus:border-teal-500 outline-none text-white">
+                        <option value="">Cibler un joueur...</option>
+                        {players.filter(p => p.isAlive && p.role.id !== 'alien').map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                     </select>
+                     <select value={alienRole} onChange={e => setAlienRole(e.target.value)} className="w-full bg-slate-900/80 border border-white/10 rounded-lg p-2 text-sm focus:border-teal-500 outline-none text-white">
+                        <option value="">Suggérer son rôle...</option>
+                        {AVAILABLE_ROLES.filter(r => r.id !== 'alien').map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
+                     </select>
+                     <button onClick={handleAlienGuess} disabled={!alienTarget || !alienRole} className="w-full bg-teal-600 hover:bg-teal-500 disabled:opacity-50 px-4 py-3 rounded-lg text-sm font-bold transition text-white mt-1 shadow-lg">
+                        Tenter la suggestion
+                     </button>
+                  </div>
+               </div>
+            )}
+          </div>
+        )}
+
+        {/* Module : État des Joueurs (Jour & Nuit) */}
+        <div className="space-y-3">
+          <h3 className="text-lg font-bold text-white/90 border-b border-white/10 pb-2">État du Village</h3>
+          {players.map(player => (
+             <div key={player.id} className={`p-3 rounded-xl border flex items-center justify-between transition-all ${player.isAlive ? 'bg-slate-800/80 border-slate-600' : 'bg-red-950/20 border-red-900/30 opacity-50'}`}>
+                <div className="flex flex-col flex-1 min-w-0 pr-2">
+                   <div className="flex items-center space-x-2">
+                      <span className={`font-bold truncate ${player.isAlive ? 'text-white' : 'text-slate-500 line-through'}`}>
+                        {player.name}
+                      </span>
+                      {player.isInfected && <Bug className="w-4 h-4 text-green-500 shrink-0" title="Infecté" />}
+                      {player.isSilenced && <VolumeX className="w-4 h-4 text-zinc-400 shrink-0" title="Réduit au silence" />}
+                   </div>
+                   <div className="flex items-center space-x-1 mt-1">
+                      <span className="text-sm">{player.role.emoji}</span>
+                      <span className={`text-xs font-medium truncate ${player.role.color}`}>{player.role.name}</span>
+                   </div>
+                </div>
+                
+                <div className="flex items-center space-x-2 shrink-0">
+                   {player.isAlive ? (
+                      <>
+                        {phase === 'DAY' && player.isSilenced && (
+                           <button onClick={() => { toggleAlive(player.id); showMessage(`${player.name} a été exécuté(e) pour avoir brisé le silence.`); }} className="bg-red-600 hover:bg-red-500 px-3 py-2 rounded-lg text-xs font-bold transition shadow-lg text-white">
+                              A parlé !
+                           </button>
+                        )}
+                        <button onClick={() => toggleAlive(player.id)} className="bg-slate-700 hover:bg-red-900 p-3 rounded-lg transition text-white" title="Éliminer / Tuer">
+                           <Skull className="w-4 h-4 text-red-300"/>
+                        </button>
+                      </>
+                   ) : (
+                      <button onClick={() => toggleAlive(player.id)} className="bg-slate-900 hover:bg-green-900 border border-slate-700 p-3 rounded-lg transition text-white" title="Ressusciter (Erreur / Potion)">
+                         <HeartPulse className="w-4 h-4 text-green-400"/>
+                      </button>
+                   )}
+                </div>
+             </div>
+          ))}
+        </div>
+        
+        {/* Footer actions */}
+        <div className="pt-8 flex justify-center pb-8">
+           <button onClick={onReset} className="px-6 py-3 rounded-xl bg-slate-900 hover:bg-red-950 border border-slate-700 hover:border-red-900/50 text-slate-400 hover:text-red-400 font-bold text-sm transition flex items-center space-x-2">
+              <RotateCcw className="w-4 h-4" />
+              <span>Terminer la partie</span>
+           </button>
+        </div>
+
+      </div>
+    </div>
+  );
+}
